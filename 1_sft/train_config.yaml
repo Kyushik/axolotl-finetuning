@@ -1,0 +1,55 @@
+# === 모델 설정 ===
+base_model: Qwen/Qwen3-0.6B
+base_model_config: Qwen/Qwen3-0.6B
+model_type: AutoModelForCausalLM
+tokenizer_type: AutoTokenizer
+trust_remote_code: true
+adapter: null
+
+# === 데이터셋 설정 ===
+datasets:
+	- path: ./honggildong_train.jsonl
+	type: alpaca
+
+# 전체 길이 설정 (Qwen3-0.6B는 최대 16384 토큰)
+sequence_len: 8192
+preprocessing_num_workers: 4
+shuffle_merged_datasets: true
+
+# === 출력 디렉토리 설정 ===
+output_dir: ./models/Qwen3-0.6B-honggildong/
+overwrite_output_dir: true
+save_only_model: true
+save_safetensors: true
+
+# === 로깅 및 저장 ===
+logging_steps: 10
+save_strategy: epoch
+save_total_limit: 1
+
+# === 훈련 하이퍼파라미터 ===
+gradient_accumulation_steps: 1
+gradient_checkpointing: true
+micro_batch_size: 16
+num_epochs: 5
+learning_rate: 5.0e-5
+lr_scheduler: cosine
+warmup_ratio: 0.1
+flash_attention: true
+bf16: true
+
+# === 최적화 (liger kernel, cut cross entropy) ===
+plugins:
+  - axolotl.integrations.liger.LigerPlugin
+  - axolotl.integrations.cut_cross_entropy.CutCrossEntropyPlugin
+liger_rope: true
+liger_rms_norm: true
+liger_glu_activation: true
+liger_layer_norm: true
+liger_fused_linear_cross_entropy: false
+  
+# === 평가 설정 ===
+val_set_size: 0.01
+eval_strategy: steps
+eval_steps: 20
+per_device_eval_batch_size: 1
