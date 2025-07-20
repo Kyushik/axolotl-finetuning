@@ -1,0 +1,60 @@
+# === 모델 설정 ===
+base_model: LGAI-EXAONE/EXAONE-4.0-1.2B
+base_model_config: LGAI-EXAONE/EXAONE-4.0-1.2B
+model_type: AutoModelForCausalLM
+tokenizer_type: AutoTokenizer
+trust_remote_code: true
+
+# === 학습 기법: dpo ===
+rl: simpo
+rl_beta: 0.1  # default in CPOTrainer
+cpo_alpha: 1.0  # default in CPOTrainer
+simpo_gamma: 0.5  # default in CPOTrainer
+
+# === 데이터셋 설정 ===
+datasets:
+  - path: ./mbti_train.jsonl
+    type: chatml.intel
+
+# 전체 길이 설정 (Qwen3-0.6B는 최대 16384 토큰)
+sequence_len: 1024
+preprocessing_num_workers: 4
+shuffle_merged_datasets: true
+
+# === 출력 디렉토리 설정 ===
+output_dir: ./models/Exaone-1.2B-mbti-simpo-1epoch/
+overwrite_output_dir: true
+save_only_model: true
+save_safetensors: true
+
+# === 로깅 및 저장 ===
+logging_steps: 10
+save_strategy: epoch
+save_total_limit: 1
+
+# === 훈련 하이퍼파라미터 ===
+gradient_accumulation_steps: 1
+gradient_checkpointing: true
+micro_batch_size: 8
+num_epochs: 1
+learning_rate: 5.0e-6
+lr_scheduler: cosine
+warmup_steps: 50
+flash_attention: false
+bf16: true
+
+# === 최적화 (liger kernel, cut cross entropy) ===
+plugins:
+  - axolotl.integrations.liger.LigerPlugin
+  - axolotl.integrations.cut_cross_entropy.CutCrossEntropyPlugin
+liger_rope: true
+liger_rms_norm: true
+liger_glu_activation: true
+liger_layer_norm: true
+liger_fused_linear_cross_entropy: false
+  
+# === 평가 설정 ===
+val_set_size: 0.01
+eval_strategy: steps
+eval_steps: 50
+per_device_eval_batch_size: 1
