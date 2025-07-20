@@ -9,7 +9,7 @@ adapter: null
 # === 데이터셋 설정 ===
 datasets:
   - path: ./honggildong_train.jsonl
-    type:
+    type: alpaca
 
 # 전체 길이 설정 (Qwen3-0.6B는 최대 16384 토큰)
 sequence_len: 8192
