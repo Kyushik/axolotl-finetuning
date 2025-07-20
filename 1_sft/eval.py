@@ -1,36 +1,56 @@
-from transformers import AutoModelForCausalLM, AutoTokenizer
-import torch
+import argparse
 import json
 from tqdm import tqdm
+import torch
+from transformers import AutoModelForCausalLM, AutoTokenizer
 
-model_path = "Qwen/Qwen3-0.6B"
+# ================================
+# argparse 인자 정의
+# ================================
+parser = argparse.ArgumentParser()
+parser.add_argument("--model_path", type=str, required=True, help="모델 경로 또는 HuggingFace 모델 이름")
+parser.add_argument(
+    "--test_input",
+    type=str,
+    default="이젹의길동의슈단이신츌귀몰ᄒᆞ야팔도의횡ᄒᆡᆼᄒᆞ되능히알ᄌᆡ업ᄂᆞᆫ지라",
+    help="추론 예시 입력 (기본값은 옛 한글 문장)"
+)
+parser.add_argument("--jsonl_path", type=str, default="honggildong_test.jsonl", help="테스트 jsonl 경로")
+args = parser.parse_args()
 
-tokenizer = AutoTokenizer.from_pretrained(model_path, trust_remote_code=True)
+# ================================
+# 모델 및 토크나이저 로드
+# ================================
+tokenizer = AutoTokenizer.from_pretrained(args.model_path, trust_remote_code=True)
 model = AutoModelForCausalLM.from_pretrained(
-    model_path,
+    args.model_path,
     trust_remote_code=True,
     torch_dtype="auto",
     device_map={"": "cuda:0"},
 )
-
 model.eval()
 
-# json 파일을 불러오는 함수
+# ================================
+# JSONL 불러오기
+# ================================
 def load_jsonl(filename):
     with open(filename, "r", encoding="utf-8") as f:
         for line in f:
             yield json.loads(line)
 
-# 예측 단어 중 정답과 겹치는 단어의 비율 계산 함수
+# ================================
+# 단어 정답률 계산 함수
+# ================================
 def get_word_overlap(pred, ref):
     ref_words = set(ref.strip().split())
     pred_words = set(pred.strip().split())
     common = ref_words & pred_words
-    return len(common) / len(ref_words)
+    return len(common) / len(ref_words) if ref_words else 0
 
-# 모델의 출력을 얻는 함수
+# ================================
+# 모델 출력 생성 함수
+# ================================
 def get_model_output(input_text, model, tokenizer):
-    # 프롬프트 템플릿 적용
     prompt = f"""Below is an instruction that describes a task, paired with an input that provides further context. Write a response that appropriately completes the request.
 
 ### Instruction:
@@ -63,11 +83,11 @@ def get_model_output(input_text, model, tokenizer):
     decoded = decoded.split("<|im_end|>")[0].strip()
     return decoded
 
-# -- 평가 루프 --
+# ================================
+# 평가 루프
+# ================================
 results = []
-jsonl_path = "honggildong_test.jsonl"
-
-for item in tqdm(load_jsonl(jsonl_path)):
+for item in tqdm(load_jsonl(args.jsonl_path)):
     input_text = item["input"]
     target_text = item["output"]
     decoded = get_model_output(input_text, model, tokenizer)
@@ -75,8 +95,12 @@ for item in tqdm(load_jsonl(jsonl_path)):
     results.append(acc)
 
 accuracy = sum(results) / len(results)
-print(f"전체 단어 포함 기준 Accuracy: {accuracy:.3f}")
+print(f"\n✅ 전체 단어 포함 기준 Accuracy: {accuracy:.3f}")
 
-# -- 추론 예시 --
-test_input = "이젹의길동의슈단이신츌귀몰ᄒᆞ야팔도의횡ᄒᆡᆼᄒᆞ되능히알ᄌᆡ업ᄂᆞᆫ지라"
-print(get_model_output(test_input, model, tokenizer))
+# ================================
+# 추론 예시 (선택적)
+# ================================
+if args.test_input:
+    print("\n🔍 추론 예시:")
+    print("Input:", args.test_input)
+    print("Output:", get_model_output(args.test_input, model, tokenizer))
