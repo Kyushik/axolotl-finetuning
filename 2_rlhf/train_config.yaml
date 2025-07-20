@@ -1,6 +1,6 @@
 # === 모델 설정 ===
-base_model: LGAI-EXAONE/EXAONE-4.0-1.2B
-base_model_config: LGAI-EXAONE/EXAONE-4.0-1.2B
+base_model: Qwen/Qwen3-1.7B
+base_model_config: Qwen/Qwen3-1.7B
 model_type: AutoModelForCausalLM
 tokenizer_type: AutoTokenizer
 trust_remote_code: true
@@ -22,7 +22,7 @@ preprocessing_num_workers: 4
 shuffle_merged_datasets: true
 
 # === 출력 디렉토리 설정 ===
-output_dir: ./models/Exaone-1.2B-mbti-simpo-1epoch/
+output_dir: ./models/Qwen3-1.7B-mbti-simpo-1epoch/
 overwrite_output_dir: true
 save_only_model: true
 save_safetensors: true
@@ -56,5 +56,5 @@ liger_fused_linear_cross_entropy: false
 # === 평가 설정 ===
 val_set_size: 0.01
 eval_strategy: steps
-eval_steps: 50
+eval_steps: 100
 per_device_eval_batch_size: 1
