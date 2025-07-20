@@ -5,7 +5,7 @@ model_type: AutoModelForCausalLM
 tokenizer_type: AutoTokenizer
 trust_remote_code: true
 
-# === 학습 기법: dpo ===
+# === 학습 기법: simpo ===
 rl: simpo
 rl_beta: 0.1  # default in CPOTrainer
 cpo_alpha: 1.0  # default in CPOTrainer
